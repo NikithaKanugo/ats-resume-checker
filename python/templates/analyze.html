@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% set active = "analyze" %}
+{% block title %}Analyze Resume — ATS Resume Checker{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-12">
+  <h1 class="text-2xl font-bold tracking-tight">Upload Resume</h1>
+  <p class="text-sm text-slate-500 mt-1 mb-8">Upload a PDF or DOCX file, or paste your resume text below.</p>
+
+  <!-- Drop zone -->
+  <div id="dropzone"
+       class="relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 p-10 text-center transition-all hover:border-violet-400 hover:bg-violet-50"
+       onclick="document.getElementById('fileInput').click()">
+    <input id="fileInput" type="file" accept=".pdf,.docx,.doc,.txt" class="hidden" />
+    <div id="dropEmpty">
+      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3 mx-auto">
+        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      </div>
+      <p class="text-sm font-medium">Drag & drop your resume here</p>
+      <p class="text-xs text-slate-500 mt-1">or click to browse</p>
+      <div class="flex gap-2 mt-3 justify-center">
+        <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium text-slate-500">PDF</span>
+        <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium text-slate-500">DOCX</span>
+        <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium text-slate-500">TXT</span>
+      </div>
+    </div>
+    <div id="dropFilled" class="hidden flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+        <svg class="h-5 w-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <div class="text-left">
+        <p id="fileName" class="text-sm font-medium"></p>
+        <p id="fileSize" class="text-xs text-slate-500"></p>
+      </div>
+      <button type="button" id="clearFile" class="ml-2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors" onclick="clearFile(event)">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Paste text fallback -->
+  <div id="pasteSection">
+    <div class="flex items-center gap-3 my-6">
+      <hr class="flex-1 border-slate-200" />
+      <span class="text-xs text-slate-400">or paste text</span>
+      <hr class="flex-1 border-slate-200" />
+    </div>
+    <textarea id="rawText" rows="8"
+              placeholder="Paste your resume text here (min 50 characters)..."
+              class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm leading-relaxed placeholder:text-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all resize-none"></textarea>
+  </div>
+
+  <!-- Error message -->
+  <div id="errorMsg" class="hidden flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 mt-4">
+    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"/></svg>
+    <span id="errorText"></span>
+  </div>
+
+  <!-- Submit button -->
+  <button id="submitBtn" onclick="handleSubmit()"
+          class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3.5 text-sm font-medium text-white transition-all hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50">
+    <span id="btnText">Analyze Resume</span>
+    <svg id="btnSpinner" class="hidden h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  let selectedFile = null;
+
+  // File input change
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (f) setFile(f);
+  });
+
+  // Drag and drop
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('border-violet-400', 'bg-violet-50'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('border-violet-400', 'bg-violet-50'));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dz.classList.remove('border-violet-400', 'bg-violet-50');
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+
+  function setFile(f) {
+    selectedFile = f;
+    document.getElementById('dropEmpty').classList.add('hidden');
+    document.getElementById('dropFilled').classList.remove('hidden');
+    document.getElementById('fileName').textContent = f.name;
+    document.getElementById('fileSize').textContent = (f.size / 1024).toFixed(0) + ' KB';
+    document.getElementById('pasteSection').classList.add('hidden');
+    updateBtn();
+  }
+
+  function clearFile(e) {
+    e.stopPropagation();
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('dropEmpty').classList.remove('hidden');
+    document.getElementById('dropFilled').classList.add('hidden');
+    document.getElementById('pasteSection').classList.remove('hidden');
+    updateBtn();
+  }
+
+  document.getElementById('rawText').addEventListener('input', updateBtn);
+
+  function updateBtn() {
+    const rawText = document.getElementById('rawText').value;
+    const ready = selectedFile !== null || rawText.trim().length >= 50;
+    document.getElementById('submitBtn').disabled = !ready;
+  }
+
+  function showError(msg) {
+    document.getElementById('errorMsg').classList.remove('hidden');
+    document.getElementById('errorText').textContent = msg;
+  }
+
+  function setLoading(loading, msg = '') {
+    const btn = document.getElementById('submitBtn');
+    const text = document.getElementById('btnText');
+    const spinner = document.getElementById('btnSpinner');
+    btn.disabled = loading;
+    text.textContent = loading ? msg : 'Analyze Resume';
+    spinner.classList.toggle('hidden', !loading);
+  }
+
+  async function handleSubmit() {
+    document.getElementById('errorMsg').classList.add('hidden');
+
+    try {
+      if (selectedFile) {
+        await submitFile(selectedFile);
+      } else {
+        const rawText = document.getElementById('rawText').value;
+        await submitRawText(rawText);
+      }
+    } catch (err) {
+      setLoading(false);
+      showError(err.message || 'Something went wrong.');
+    }
+  }
+
+  async function submitFile(f) {
+    setLoading(true, 'Uploading...');
+    const fd = new FormData();
+    fd.append('file', f);
+    const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+    const uploadBody = await uploadRes.json();
+    if (!uploadRes.ok) throw new Error(uploadBody.detail || 'Upload failed.');
+
+    setLoading(true, 'Analyzing...');
+    await runAnalysis({ resume_upload_id: uploadBody.upload_id });
+  }
+
+  async function submitRawText(text) {
+    setLoading(true, 'Analyzing...');
+    await runAnalysis({ raw_text: text });
+  }
+
+  async function runAnalysis(payload) {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.detail || 'Analysis failed.');
+    window.location.href = '/results/' + body.analysis_id;
+  }
+
+  updateBtn();
+</script>
+{% endblock %}

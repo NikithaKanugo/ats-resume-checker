@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ATS Resume Checker{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: '#e2e8f0',
+            card: '#ffffff',
+            muted: { DEFAULT: '#f1f5f9', foreground: '#64748b' },
+            primary: { DEFAULT: '#7c3aed', foreground: '#ffffff' },
+            foreground: '#0f172a',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f8fafc; }
+    .shadow-card { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+    .shadow-card-hover { box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
+    .score-bar { transition: width 0.6s ease-out; }
+  </style>
+</head>
+<body class="h-full bg-slate-50 text-slate-900">
+  <div class="flex h-full min-h-screen">
+    <!-- Sidebar -->
+    <aside class="hidden md:flex w-56 flex-col border-r border-slate-200 bg-white px-3 py-6 gap-1">
+      <div class="px-3 mb-6">
+        <span class="text-sm font-bold tracking-tight text-violet-600">ATS Checker</span>
+      </div>
+      <a href="/" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 {% if active == 'dashboard' %}bg-slate-100 text-slate-900{% else %}text-slate-600{% endif %}">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/analyze" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 {% if active == 'analyze' %}bg-slate-100 text-slate-900{% else %}text-slate-600{% endif %}">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Analyze
+      </a>
+    </aside>
+
+    <!-- Mobile nav -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t border-slate-200 bg-white">
+      <a href="/" class="flex flex-1 flex-col items-center py-2 text-xs {% if active == 'dashboard' %}text-violet-600{% else %}text-slate-500{% endif %}">
+        <svg class="h-5 w-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="/analyze" class="flex flex-1 flex-col items-center py-2 text-xs {% if active == 'analyze' %}text-violet-600{% else %}text-slate-500{% endif %}">
+        <svg class="h-5 w-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Analyze
+      </a>
+    </div>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>
